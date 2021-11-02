@@ -1,0 +1,6 @@
+requests
+web3
+click
+web3[tester]
+pytest
+mypy
