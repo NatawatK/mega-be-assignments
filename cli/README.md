@@ -5,7 +5,7 @@
 - Pip (make sure you are using correct one if you have multiple versions of python)
 
 ## Step to run program
-###install requirement packages 
+### install requirement packages 
 ```bash
 pip install -r requirements.txt
 
@@ -13,7 +13,7 @@ pip3 install -r requirements.txt
 
 python3 -m pip install -r requirements.txt
 ```
-###prepare env file
+### prepare env file
    1. create new env file named `.env` inside `cli` directory (you can take at .env.example for reference)
    2. add following config
       1. HTTP_ENDPOINT => your http endpoint
