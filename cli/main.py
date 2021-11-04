@@ -36,14 +36,14 @@ def watch_tx(contract_address):
 
 
 @click.command()
-@click.argument('n')
+@click.argument('n', type=int)
 @click.argument('contract_address')
 def latest_tx(n, contract_address):
     erc20helper.latest_transactions(contract_address, n)
 
 
 @click.command()
-@click.argument('N')
+@click.argument('N', type=int)
 @click.argument('contract_address')
 def holders():
     return

@@ -26,7 +26,7 @@ class ERC20Helper:
     def __init__(self, infura_project_id: str):
         self.web3 = InfuraProvider.get_web_socket_provider(infura_project_id)
 
-    def __get_contract_from_address(self, contract_address: str) -> Contract:
+    def __get_erc20_contract_from_address(self, contract_address: str) -> Contract:
         """
         return web3.Contract object from given contract address
         :param web3: web3 engine
@@ -42,6 +42,7 @@ class ERC20Helper:
 
         try:
             contract: Contract = self.web3.eth.contract(address=cs_contract, abi=abi)
+            self.__validate_erc20(contract)
             return contract
 
         except ValueError:
@@ -56,21 +57,20 @@ class ERC20Helper:
             print("address format is not correct")
             exit(1)
 
-    def get_account_balance_from_address(self, contract_address: str, account: str) -> None:
+    @staticmethod
+    def __validate_erc20(contract: Contract):
         """
-        show token balance that belonging to the account
-        :param web3: web3 engine
-        :param contract_address: address contract
-        :param account: account to check the balance
+        validate given contract by trying to call erc20 functions
+        :param contract:
         """
-        contract = self.__get_contract_from_address(contract_address)
-        cs_account = self.__get_contract_from_address(account)
-
-        symbol = contract.functions.symbol().call()
-        balance = contract.functions.balanceOf(cs_account).call()
-        decimals = contract.functions.decimals().call()
-
-        print(f"account: {account} has {balance / 10 ** decimals} of {symbol} ({balance} wei)")
+        try:
+            contract.functions.totalSupply().call()
+            contract.functions.name().call()
+            contract.functions.symbol().call()
+            contract.functions.decimals().call()
+        except Exception:
+            print(f"address {contract.address} is not ERC20")
+            exit(1)
 
     def get_contract_details(self, contract_address: str) -> None:
         """
@@ -78,7 +78,7 @@ class ERC20Helper:
         :param web3: web3 engine
         :param contract_address: address of contract that want to get the detail
         """
-        contract = self.__get_contract_from_address(contract_address)
+        contract = self.__get_erc20_contract_from_address(contract_address)
 
         total_supply = contract.functions.totalSupply().call()
         name = contract.functions.name().call()
@@ -90,13 +90,29 @@ class ERC20Helper:
         print(f"decimals: {decimals}")
         print(f"total supply: {total_supply} wei => {total_supply / 10 ** decimals}")
 
+    def get_account_balance_from_address(self, contract_address: str, account: str) -> None:
+        """
+        show token balance that belonging to the account
+        :param web3: web3 engine
+        :param contract_address: address contract
+        :param account: account to check the balance
+        """
+        contract = self.__get_erc20_contract_from_address(contract_address)
+        cs_account = self.__get_checksum_address(account)
+
+        symbol = contract.functions.symbol().call()
+        balance = contract.functions.balanceOf(cs_account).call()
+        decimals = contract.functions.decimals().call()
+
+        print(f"Account: {account} has {balance / 10 ** decimals} of {symbol} ({balance} wei)")
+
     def holders(self, contract_address: str, n: int) -> None:
         pass
         # TODO: use Etherscan API to query holder ? it may reduce cost of computation ?
         # TODO: check from event Transfer(address indexed from, address indexed to, uint256 value)
         # TODO: add cache for optimization
         balances = defaultdict(lambda: 0)
-        contract = self.__get_contract_from_address(contract_address)
+        contract = self.__get_erc20_contract_from_address(contract_address)
         latest = self.web3.eth.get_block_number()
         step = 10
         event_filter = contract.events.Transfer.createFilter(fromBlock=latest - step, toBlock=latest)
@@ -153,7 +169,7 @@ class ERC20Helper:
         :param contract_address: address of the contract
         :param n: number of transaction
         """
-        contract = self.__get_contract_from_address(contract_address)
+        contract = self.__get_erc20_contract_from_address(contract_address)
         cs_address = self.__get_checksum_address(contract_address)
 
         # Get transaction from blockchain, there is limitation of infura, you can't query more than 10k record at the same time.
