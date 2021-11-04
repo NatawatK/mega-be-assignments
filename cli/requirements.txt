@@ -4,3 +4,4 @@ click
 web3[tester]
 pytest
 mypy
+python-dotenv
